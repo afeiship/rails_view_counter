@@ -2,7 +2,25 @@
 > rails plugin new rails_view_counter --mountable --full
 
 ## Usage
-How to use my plugin.
+```sh
+rails generate rails_view_counter:install
+rails generate rails_view_counter:migration posts
+rails db:migrate
+```
+```rb
+# config/initializers/rails_view_counter.rb
+RailsViewCounter.configure do |config|
+  config.ip_limit_duration = 2.hours
+  config.enable_ip_limit = true
+  config.log_views = true
+end
+
+
+class Post < ApplicationRecord
+  # 自动包含 ViewCounter::ModelAdditions
+  validates :title, presence: true
+end
+```
 
 ## Installation
 Add this line to your application's Gemfile:
