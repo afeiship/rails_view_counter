@@ -1,0 +1,17 @@
+{
+  "git": {
+    "requireCleanWorkingDir": false
+  },
+  "hooks": {
+    "after:init": ["t2k", "npm run clean"],
+    "after:bump": [
+      "syncv -p lib/rails_view_counter/version.rb",
+      "npm run build",
+      "npm run pubpush"
+    ]
+  },
+  "github": {
+    "release": true,
+    "proxy": "http://127.0.0.1:9090"
+  }
+}
