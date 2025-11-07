@@ -1,7 +1,8 @@
 {
   "name": "rails_view_counter",
+  "private": true,
   "version": "1.0.1",
-  "description": "> A Rails gem for tracking and managing view counts with IP limiting.",
+  "description": "A Rails gem for tracking and managing view counts with IP limiting.",
   "main": "index.js",
   "directories": {
     "lib": "lib",
