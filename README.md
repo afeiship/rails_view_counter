@@ -1,5 +1,5 @@
 # rails_view_counter
-> rails plugin new rails_view_counter --mountable --full
+> A Rails gem for tracking and managing view counts with IP limiting.
 
 ## Usage
 ```sh
