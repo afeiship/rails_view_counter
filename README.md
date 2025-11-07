@@ -1,22 +1,28 @@
-# rails-module-jwt-authentication
-> JWT Authentication for rails.
+# rails_view_counter
+> rails plugin new rails_view_counter --mountable --full
 
-## get-started
-```shell
-rails new . --api
+## Usage
+How to use my plugin.
+
+## Installation
+Add this line to your application's Gemfile:
+
+```ruby
+gem "rails_view_counter"
 ```
 
-## error
-- https://rubyplus.com/articles/5891-Ruby-and-Nokogiri-Gem-Compatibility
-- https://stackoverflow.com/questions/35009531/xcrun-error-active-developer-path-applications-xcode-app-contents-developer
-
-```rb
-# 先删除了 XCode
-sudo xcode-select --reset
-gem install nokogiri --verbose
+And then execute:
+```bash
+$ bundle
 ```
 
-## resources
-- https://medium.com/binar-academy/rails-api-jwt-authentication-a04503ea3248
-- https://github.com/riskimidiw/rails-jwt
-- https://engineering.musefind.com/building-a-simple-token-based-authorization-api-with-rails-a5c181b83e02
+Or install it yourself as:
+```bash
+$ gem install rails_view_counter
+```
+
+## Contributing
+Contribution directions go here.
+
+## License
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
