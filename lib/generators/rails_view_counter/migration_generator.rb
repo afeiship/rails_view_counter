@@ -11,8 +11,10 @@ module RailsViewCounter
     argument :table_name, type: :string, required: true, desc: 'Table name to add view counter to'
 
     def create_migration_file
+      # 确保表名是复数形式
+      plural_table_name = table_name.pluralize
       migration_template 'migration.rb', 
-                        "db/migrate/add_view_counter_to_#{table_name.singularize}.rb"
+                        "db/migrate/add_view_counter_to_#{plural_table_name}.rb"
     end
 
     private
