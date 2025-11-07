@@ -1,11 +1,21 @@
-class RailsViewCounterMigrationGenerator < Rails::Generators::Base
-  def create_migration_file
-    migration_template "migration.rb", "db/migrate/add_view_counter_to_#{table_name}.rb"
-  end
+require 'rails/generators'
 
-  private
+module RailsViewCounter
+  class MigrationGenerator < Rails::Generators::Base
+    source_root File.expand_path('../templates', __dir__)
+    desc 'Generates migration for adding view counter to a model'
 
-  def table_name
-    @table_name ||= ask("Which table would you like to add view counter to?").underscore
+    argument :table_name, type: :string, desc: 'Table name to add view counter to'
+
+    def create_migration_file
+      migration_template 'migration.rb', 
+                        "db/migrate/add_view_counter_to_#{table_name}.rb"
+    end
+
+    private
+
+    def source_paths
+      [File.expand_path('../templates', __dir__)]
+    end
   end
 end
