@@ -2,7 +2,7 @@ require 'rails/generators'
 
 module RailsViewCounter
   class InstallGenerator < Rails::Generators::Base
-    source_root File.expand_path('../templates', __dir__)
+    source_root File.expand_path('templates', __dir__)
     desc 'Generates Rails View Counter initializer'
 
     def copy_initializer
