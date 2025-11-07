@@ -39,6 +39,9 @@ Or install it yourself as:
 $ gem install rails_view_counter
 ```
 
+## Resources
+- https://chat.qwen.ai/c/b1a1ea17-4937-48df-abf0-81be548e3d89
+
 ## Contributing
 Contribution directions go here.
 
