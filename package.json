@@ -1,6 +1,6 @@
 {
   "name": "rails_view_counter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "> A Rails gem for tracking and managing view counts with IP limiting.",
   "main": "index.js",
   "directories": {
@@ -14,7 +14,12 @@
     "pubpush": "gem push *.gem",
     "release": "release-it"
   },
-  "keywords": [],
+  "keywords": [
+    "rails",
+    "cache",
+    "counter",
+    "view"
+  ],
   "author": "afeiship",
   "license": "ISC"
 }
