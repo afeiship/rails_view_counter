@@ -15,6 +15,8 @@ Gem::Specification.new do |spec|
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/ariczheng/rails_view_counter"
   spec.metadata["changelog_uri"] = "https://github.com/ariczheng/rails_view_counter/blob/main/CHANGELOG.md"
+  spec.metadata["allowed_push_host"] = "https://rubygems.org"
+
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     Dir["{app,config,db,lib,generators}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   end
