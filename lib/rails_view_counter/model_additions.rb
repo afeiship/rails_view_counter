@@ -39,7 +39,15 @@ module RailsViewCounter
       return true unless enable_ip_limit
 
       cache_key = generate_cache_key(ip_address)
-      !Rails.cache.read(cache_key)
+      
+      # 检查该 IP 是否在限制时间内已经访问过
+      if Rails.cache.read(cache_key)
+        return false # 不允许增加浏览次数
+      else
+        # 设置缓存，有效期为限制时间
+        Rails.cache.write(cache_key, true, expires_in: limit_duration)
+        return true # 允许增加浏览次数
+      end
     end
 
     def generate_cache_key(ip_address)
@@ -51,7 +59,6 @@ module RailsViewCounter
     end
 
     def view_counter_enabled?
-      # 可以根据配置决定是否启用
       true
     end
 
@@ -60,12 +67,8 @@ module RailsViewCounter
     end
 
     def log_view(ip_address)
-      ViewCounter::ViewLog.create!(
-        viewable_type: self.class.name,
-        viewable_id: id,
-        ip_address: ip_address,
-        user_agent: nil # 可以从控制器获取
-      )
+      # 如果需要记录访问日志，这里可以实现
+      # ViewCounter::ViewLog.create!(...)
     end
   end
 end
