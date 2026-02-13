@@ -1,0 +1,292 @@
+# Rails View Counter
+
+> Rails View Counter is a Rails gem for tracking and managing view counts with IP-based limiting functionality. It provides a simple, configurable way to add view counting to any ActiveRecord model with built-in IP rate limiting to prevent abuse from repeated views. The gem integrates seamlessly with Rails caching for optimal performance and offers flexible configuration options.
+
+**Important notes for agents:**
+- This gem is a lightweight Rails engine that automatically includes modules into ActiveRecord models
+- All IP limiting logic is handled via Rails.cache, requiring cache stores to be properly configured
+- The gem follows Rails conventions with concerns and generator templates for easy setup
+- View counting can be disabled per-model or customized via configuration options
+- The gem supports Rails 7+ with Ruby 3.0+
+
+## Documentation
+- [README.md](README.md): Installation guide and basic usage examples
+- [MIT-LICENSE](MIT-LICENSE): License information
+
+## Key Features
+
+- **Simple Integration:** Add view counting to any model with a single line in the generator
+- **IP-based Rate Limiting:** Prevents view count inflation from the same IP within a configurable time window
+- **Flexible Configuration:** Global settings for IP limits, duration, and logging behavior
+- **Rails Cache Integration:** Uses Rails.cache for efficient IP tracking without database overhead
+- **Auto-increment Fields:** Automatically initializes and manages `view_count` integer column
+- **Controller Helper:** Convenient method for incrementing counts from controllers with automatic IP detection
+- **Proxy Support:** Properly handles X-Forwarded-For headers for real IP detection behind load balancers
+
+## Installation
+
+Add to your Gemfile:
+
+```ruby
+gem "rails_view_counter"
+```
+
+Install the gem:
+
+```bash
+bundle install
+```
+
+Run the install generator to create the configuration file:
+
+```bash
+rails generate rails_view_counter:install
+```
+
+This creates `config/initializers/rails_view_counter.rb`
+
+## Configuration
+
+After installation, configure the gem in `config/initializers/rails_view_counter.rb`:
+
+```ruby
+RailsViewCounter.configure do |config|
+  # IP rate limit duration (default: 1.hour)
+  config.ip_limit_duration = 2.hours
+
+  # Enable IP-based limiting (default: true)
+  config.enable_ip_limit = true
+
+  # Enable detailed view logging (default: false)
+  config.log_views = true
+
+  # Cache store to use (default: :rails_cache)
+  config.cache_store = :rails_cache
+end
+```
+
+## Database Setup
+
+Add view_count column to your model:
+
+```bash
+rails generate rails_view_counter:migration Post
+rails db:migrate
+```
+
+This adds an integer column `view_count` with default value of 0.
+
+## Model Setup
+
+Add to your model - the ViewCounter modules are automatically included:
+
+```ruby
+class Post < ApplicationRecord
+  # ViewCounter modules are automatically included
+  validates :title, presence: true
+end
+```
+
+## Core Components & APIs
+
+### ModelAdditions Module
+
+Automatically included in all ActiveRecord models. Provides instance methods for view counting.
+
+#### Methods
+
+- **`increment_view_count!(ip_address = nil, options = {})`**: Increments the view count for the record
+  - Parameters:
+    - `ip_address` (String): The IP address of the viewer for rate limiting
+    - `options` (Hash): Optional overrides for configuration
+      - `:limit_duration` - Override IP limit duration
+      - `:enable_ip_limit` - Override IP limit setting
+  - Returns: `true` if count was incremented, `false` if blocked by IP limit
+  - Automatically uses Rails.cache to track IP addresses within the time window
+
+- **`can_increment_view_count?(ip_address, options = {})`**: Check if view would be counted
+  - Returns: `true` if the IP can increment the view count
+  - Useful for previewing whether a count would be incremented
+
+#### Example Usage
+
+```ruby
+# In a controller action
+@post = Post.find(params[:id])
+@post.increment_view_count!(request.remote_ip)
+
+# With custom duration override
+@post.increment_view_count!(request.remote_ip, limit_duration: 30.minutes)
+
+# Check without incrementing
+if @post.can_increment_view_count?(request.remote_ip)
+  # Show something special for first-time viewers
+end
+```
+
+### ControllerAdditions Module
+
+Automatically included in ApplicationController. Provides helper methods for controllers.
+
+#### Methods
+
+- **`increment_view_count!(viewable, options = {})`**: Increment view count for any viewable object
+  - Parameters:
+    - `viewable`: The ActiveRecord model instance to increment
+    - `options` (Hash): Optional overrides passed through to model
+  - Automatically extracts user IP from request headers
+  - Handles X-Forwarded-For for proxy/CDN setups
+  - Returns: Boolean from the model's increment_view_count! method
+
+#### Example Usage
+
+```ruby
+class PostsController < ApplicationController
+  def show
+    @post = Post.find(params[:id])
+    increment_view_count!(@post)
+    # View count is now incremented with IP limiting
+  end
+end
+```
+
+## Configuration Options
+
+### Available Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `ip_limit_duration` | ActiveSupport::Duration | `1.hour` | Time window before same IP can increment again |
+| `enable_ip_limit` | Boolean | `true` | Enable/disable IP-based rate limiting |
+| `log_views` | Boolean | `false` | Enable detailed view logging (placeholder for future) |
+| `cache_store` | Symbol | `:rails_cache` | Cache store backend for IP tracking |
+
+## IP Detection Logic
+
+The gem uses a sophisticated IP detection strategy:
+
+1. **X-Forwarded-For Header**: If present, extracts the first (original client) IP
+2. **Remote IP**: Falls back to `request.remote_ip` if no forwarding header
+3. **Normalization**: Converts IP addresses to cache-safe strings (replaces `.` and `:` with `_`)
+
+This ensures accurate IP tracking behind:
+- Load balancers
+- CDN/proxy services (CloudFlare, CloudFront, etc.)
+- Reverse proxies (Nginx, Apache)
+
+## Cache Key Format
+
+IP tracking uses cache keys in format:
+
+```
+{model_name_lowercase}_{record_id}_{normalized_ip}
+```
+
+Example: `post_123_192_168_1_1`
+
+## Usage Examples
+
+### Basic Blog Post
+
+```ruby
+class PostsController < ApplicationController
+  def show
+    @post = Post.find(params[:id])
+    increment_view_count!(@post)
+  end
+
+  def index
+    @popular_posts = Post.order(view_count: :desc).limit(10)
+  end
+end
+```
+
+### API Endpoint
+
+```ruby
+class Api::ArticlesController < ApplicationController
+  def show
+    @article = Article.find(params[:id])
+    increment_view_count!(@article, limit_duration: 1.minute)
+
+    render json: @article
+  end
+end
+```
+
+### Multiple Viewable Types
+
+```ruby
+class ProductsController < ApplicationController
+  def show
+    @product = Product.find(params[:id])
+    increment_view_count!(@product)
+  end
+end
+
+class ReviewsController < ApplicationController
+  def show
+    @review = Review.find(params[:id])
+    increment_view_count!(@review)
+  end
+end
+```
+
+## Usage Notes for Agents
+
+### File Locations
+
+- **Main Module**: `lib/rails_view_counter.rb`
+- **Model Module**: `lib/rails_view_counter/model_additions.rb`
+- **Controller Module**: `lib/rails_view_counter/controller_additions.rb`
+- **Configuration**: `lib/rails_view_counter/configuration.rb`
+- **Engine**: `lib/rails_view_counter/engine.rb`
+- **Generators**: `lib/generators/rails_view_counter/`
+- **Templates**: `lib/generators/templates/`
+
+### Model Requirements
+
+Models MUST have:
+- An integer column named `view_count` (added via migration generator)
+- Standard ActiveRecord inheritance (`ApplicationRecord`)
+
+### Common Gotchas
+
+1. **Cache Store Required**: Ensure Rails.cache is configured or IP limiting will fail
+2. **Migration Required**: Always run the migration generator before using view counting
+3. **IP Address Required**: Pass `nil` as IP to disable rate limiting for specific increments
+4. **Column Name**: The column must be named exactly `view_count` (not configurable currently)
+
+### Testing Example
+
+```ruby
+# In your tests
+post = Post.create!(title: "Test")
+post.increment_view_count!("192.168.1.1")
+expect(post.view_count).to eq(1)
+
+# IP limit blocks second increment
+post.increment_view_count!("192.168.1.1")
+expect(post.view_count).to eq(1) # Still 1
+
+# Different IP increments
+post.increment_view_count!("10.0.0.1")
+expect(post.view_count).to eq(2)
+```
+
+## Troubleshooting
+
+### View count not incrementing
+- Ensure migration was run: `rails db:migrate`
+- Check that `view_count` column exists in the database
+- Verify cache store is configured in Rails
+
+### IP limiting not working
+- Verify `enable_ip_limit = true` in configuration
+- Check Rails.cache is working: `Rails.cache.write('test', true)`
+- Ensure IP address is being passed to `increment_view_count!`
+
+### Behind proxy/load balancer
+- Ensure X-Forwarded-For header is being forwarded
+- The gem automatically handles this header when present
+- Check your proxy configuration (Nginx, CloudFlare, etc.)
